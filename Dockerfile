@@ -26,8 +26,7 @@ RUN pip install xformers==0.0.29.post2
 
 # Install custom nodes
 RUN cd ComfyUI/custom_nodes && \
-    git clone https://github.com/cubiq/ComfyUI_IPAdapter_plus.git && \
-    cd ComfyUI_IPAdapter_plus && pip install -r requirements.txt
+    git clone https://github.com/cubiq/ComfyUI_IPAdapter_plus.git
 
 RUN cd ComfyUI/custom_nodes && \
     git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git && \
