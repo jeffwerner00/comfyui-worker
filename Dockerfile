@@ -1,7 +1,7 @@
 # Riley ComfyUI Serverless Worker
 # Base: CUDA 12.4 + Python 3.11
 
-FROM runpod/base:0.6.1-cuda12.4.1
+FROM runpod/base:1.0.3-cuda1281-ubuntu2204
 
 # System deps
 RUN apt-get update && apt-get install -y \
