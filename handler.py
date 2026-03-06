@@ -12,6 +12,7 @@ import urllib.error
 import urllib.parse
 import base64
 import subprocess
+import threading
 import sys
 
 COMFY_DIR = "/workspace/ComfyUI"
@@ -220,19 +221,20 @@ def download_image(filename: str) -> bytes:
 _comfyui_proc = None
 _initialized = False
 _init_error = None
+_init_thread = None
 
-def initialize():
+def _run_initialize():
     global _comfyui_proc, _initialized, _init_error
     try:
+        log("Background init: downloading models...")
         ensure_models()
+        log("Background init: starting ComfyUI...")
         _comfyui_proc = start_comfyui()
         _initialized = True
         log("Worker initialized successfully")
     except Exception as e:
         _init_error = str(e)
         log(f"INIT ERROR: {e}")
-        # Don't crash the worker — let handler return error per job
-        # This keeps the worker alive so RunPod doesn't spin-crash-loop
 
 # --- Handler ---
 def handler(job):
@@ -250,8 +252,13 @@ def handler(job):
     }
     """
     try:
+        # Wait for background init (up to 10 min for first cold start with model downloads)
+        if _init_thread and _init_thread.is_alive():
+            log("Waiting for initialization to complete...")
+            _init_thread.join(timeout=600)
+
         if not _initialized:
-            return {"error": f"Worker not initialized: {_init_error}"}
+            return {"error": f"Worker not initialized: {_init_error or 'unknown error'}"}
 
         job_input = job["input"]
         workflow = job_input.get("workflow")
@@ -281,7 +288,10 @@ def handler(job):
         log(f"Error: {e}")
         return {"error": str(e)}
 
-# Initialize on module load (RunPod calls this before first job)
-initialize()
+# Start initialization in background thread — worker registers with RunPod immediately
+# instead of blocking for up to 300s+ waiting for ComfyUI to start
+_init_thread = threading.Thread(target=_run_initialize, daemon=True)
+_init_thread.start()
+log("Background init thread started — worker registering with RunPod now")
 
 runpod.serverless.start({"handler": handler})
