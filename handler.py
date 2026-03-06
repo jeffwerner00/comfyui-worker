@@ -109,11 +109,37 @@ def ensure_models():
         if not os.path.exists(comfy_file) and os.path.exists(vol_file):
             os.symlink(vol_file, comfy_file)
     
-    # Face reference image
-    face_ref_vol = os.path.join(MODEL_VOLUME, "inputs/riley-face-ref.jpg")
-    face_ref_comfy = os.path.join(COMFY_DIR, "input/riley-face-ref.jpg")
-    if not os.path.exists(face_ref_comfy) and os.path.exists(face_ref_vol):
-        os.symlink(face_ref_vol, face_ref_comfy)
+    # Face reference images — download to volume if missing, symlink into ComfyUI
+    face_refs = {
+        "riley-face-ref.jpg": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/riley-face-ref.jpg",
+        "pam-face-ref.jpg":   "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/pam-face-ref.jpg",
+    }
+    inputs_vol = os.path.join(MODEL_VOLUME, "inputs")
+    os.makedirs(inputs_vol, exist_ok=True)
+    for fname, url in face_refs.items():
+        vol_path   = os.path.join(inputs_vol, fname)
+        comfy_path = os.path.join(COMFY_DIR, "input", fname)
+        if not os.path.exists(vol_path) or os.path.getsize(vol_path) < 1000:
+            log(f"Downloading face ref {fname}...")
+            hf_token = os.environ.get('HF_TOKEN', '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')
+            try:
+                cmd = ["wget", "-q", "-O", vol_path,
+                       "--header", f"Authorization: Bearer {hf_token}", url]
+                result = subprocess.run(cmd, timeout=60)
+                if result.returncode == 0:
+                    log(f"Downloaded: {fname}")
+                else:
+                    log(f"wget failed for {fname} (may not exist yet — skipping)")
+                    if os.path.exists(vol_path):
+                        os.remove(vol_path)
+                    continue
+            except Exception as e:
+                log(f"Could not download {fname}: {e}")
+                continue
+        if os.path.exists(vol_path) and not os.path.exists(comfy_path):
+            os.makedirs(os.path.dirname(comfy_path), exist_ok=True)
+            os.symlink(vol_path, comfy_path)
+            log(f"Symlinked face ref: {fname}")
     
     log("Model check complete")
 
