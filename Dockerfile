@@ -1,29 +1,23 @@
 # Riley ComfyUI Serverless Worker
-# Base: CUDA 12.4 + Python 3.11
+# Base: runpod/pytorch — pre-configured Python + CUDA + RunPod SDK environment
 
-FROM runpod/base:1.0.3-cuda1281-ubuntu2204
+FROM runpod/pytorch:2.6.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 
 # System deps
 RUN apt-get update && apt-get install -y \
     git wget curl libgl1 libglib2.0-0 libsm6 libxext6 libxrender-dev \
-    python3-pip python3-dev \
-    && rm -rf /var/lib/apt/lists/* \
-    && ln -sf /usr/bin/python3 /usr/local/bin/python
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
 
 # Clone ComfyUI
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git ComfyUI
 
-# Install ComfyUI requirements
-RUN cd ComfyUI && python3 -m pip install -r requirements.txt
-
-# Install torch stack (CUDA 12.4 compatible)
-RUN python3 -m pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 \
-    --index-url https://download.pytorch.org/whl/cu124
+# Install ComfyUI requirements (uses base image's Python env)
+RUN cd ComfyUI && pip install -r requirements.txt
 
 # Install xformers
-RUN python3 -m pip install xformers==0.0.29.post2
+RUN pip install xformers==0.0.29.post2
 
 # Install custom nodes
 RUN cd ComfyUI/custom_nodes && \
@@ -31,13 +25,13 @@ RUN cd ComfyUI/custom_nodes && \
 
 RUN cd ComfyUI/custom_nodes && \
     git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git && \
-    cd comfyui_controlnet_aux && python3 -m pip install -r requirements.txt
+    cd comfyui_controlnet_aux && pip install -r requirements.txt
 
 # Install InsightFace + ONNX
-RUN python3 -m pip install insightface onnxruntime-gpu
+RUN pip install insightface onnxruntime-gpu
 
 # Install RunPod SDK
-RUN python3 -m pip install runpod
+RUN pip install runpod
 
 # Create model directories (will be symlinked to network volume at runtime)
 RUN mkdir -p /workspace/ComfyUI/models/checkpoints \
