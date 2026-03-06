@@ -9,9 +9,9 @@ import os
 import time
 import urllib.request
 import urllib.error
+import urllib.parse
 import base64
 import subprocess
-import threading
 import sys
 
 COMFY_DIR = "/workspace/ComfyUI"
@@ -216,15 +216,23 @@ def download_image(filename: str) -> bytes:
     with urllib.request.urlopen(url, timeout=30) as resp:
         return resp.read()
 
-import urllib.parse
-
 # --- Startup ---
 _comfyui_proc = None
+_initialized = False
+_init_error = None
 
 def initialize():
-    global _comfyui_proc
-    ensure_models()
-    _comfyui_proc = start_comfyui()
+    global _comfyui_proc, _initialized, _init_error
+    try:
+        ensure_models()
+        _comfyui_proc = start_comfyui()
+        _initialized = True
+        log("Worker initialized successfully")
+    except Exception as e:
+        _init_error = str(e)
+        log(f"INIT ERROR: {e}")
+        # Don't crash the worker — let handler return error per job
+        # This keeps the worker alive so RunPod doesn't spin-crash-loop
 
 # --- Handler ---
 def handler(job):
@@ -242,6 +250,9 @@ def handler(job):
     }
     """
     try:
+        if not _initialized:
+            return {"error": f"Worker not initialized: {_init_error}"}
+
         job_input = job["input"]
         workflow = job_input.get("workflow")
         client_id = job_input.get("client_id", f"job-{job.get('id', 'unknown')}")
