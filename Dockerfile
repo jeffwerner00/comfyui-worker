@@ -7,7 +7,8 @@ FROM runpod/base:1.0.3-cuda1281-ubuntu2204
 RUN apt-get update && apt-get install -y \
     git wget curl libgl1 libglib2.0-0 libsm6 libxext6 libxrender-dev \
     python3-pip python3-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3 /usr/local/bin/python
 
 WORKDIR /workspace
 
@@ -15,14 +16,14 @@ WORKDIR /workspace
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git ComfyUI
 
 # Install ComfyUI requirements
-RUN cd ComfyUI && pip install -r requirements.txt
+RUN cd ComfyUI && python3 -m pip install -r requirements.txt
 
 # Install torch stack (CUDA 12.4 compatible)
-RUN pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 \
+RUN python3 -m pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 \
     --index-url https://download.pytorch.org/whl/cu124
 
 # Install xformers
-RUN pip install xformers==0.0.29.post2
+RUN python3 -m pip install xformers==0.0.29.post2
 
 # Install custom nodes
 RUN cd ComfyUI/custom_nodes && \
@@ -30,13 +31,13 @@ RUN cd ComfyUI/custom_nodes && \
 
 RUN cd ComfyUI/custom_nodes && \
     git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git && \
-    cd comfyui_controlnet_aux && pip install -r requirements.txt
+    cd comfyui_controlnet_aux && python3 -m pip install -r requirements.txt
 
 # Install InsightFace + ONNX
-RUN pip install insightface onnxruntime-gpu
+RUN python3 -m pip install insightface onnxruntime-gpu
 
 # Install RunPod SDK
-RUN pip install runpod
+RUN python3 -m pip install runpod
 
 # Create model directories (will be symlinked to network volume at runtime)
 RUN mkdir -p /workspace/ComfyUI/models/checkpoints \
