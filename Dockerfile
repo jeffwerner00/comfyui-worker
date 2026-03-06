@@ -1,4 +1,5 @@
 # Riley ComfyUI Serverless Worker
+# Build trigger: 2026-03-06
 # Base: runpod/pytorch - pre-configured Python + CUDA + RunPod SDK environment
 
 FROM runpod/pytorch:2.6.0-py3.11-cuda12.4.1-devel-ubuntu22.04
