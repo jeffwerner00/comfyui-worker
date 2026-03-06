@@ -19,30 +19,33 @@ MODEL_VOLUME = "/runpod-volume"
 COMFY_HOST = "http://127.0.0.1:8188"
 
 # Model definitions — checked/downloaded on startup
+CIVITAI_TOKEN = os.environ.get('CIVITAI_TOKEN', 'd0933fef3ae3fee1f474425e26266057')
+HF_TOKEN_VAL = os.environ.get('HF_TOKEN', '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')
+
 MODELS = {
     "checkpoints/lustifySDXLv7.safetensors": {
         "url": "https://civitai.com/api/download/models/2155386",
-        "auth": f"Bearer {os.environ.get('CIVITAI_TOKEN', '')}",
+        "auth": f"Bearer {CIVITAI_TOKEN}",
         "size_gb": 6.9
     },
     "loras/riley-pony-v1.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/riley-pony-v1.safetensors",
-        "auth": f"Bearer {os.environ.get('HF_TOKEN', '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')}",
+        "auth": f"Bearer {HF_TOKEN_VAL}",
         "size_gb": 0.14
     },
     "ipadapter/ip-adapter-faceid_sdxl.bin": {
         "url": "https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sdxl.bin",
-        "auth": f"Bearer {os.environ.get('HF_TOKEN', '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')}",
+        "auth": f"Bearer {HF_TOKEN_VAL}",
         "size_gb": 1.0
     },
     "clip_vision/CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors": {
         "url": "https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors",
-        "auth": f"Bearer {os.environ.get('HF_TOKEN', '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')}",
+        "auth": f"Bearer {HF_TOKEN_VAL}",
         "size_gb": 2.5
     },
     "controlnet/control-lora-openposeXL2-rank256.safetensors": {
         "url": "https://huggingface.co/thibaud/controlnet-openpose-sdxl-1.0/resolve/main/control-lora-openposeXL2-rank256.safetensors",
-        "auth": f"Bearer {os.environ.get('HF_TOKEN', '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')}",
+        "auth": f"Bearer {HF_TOKEN_VAL}",
         "size_gb": 0.74
     }
 }
@@ -87,7 +90,12 @@ def ensure_models():
                 if info.get("auth"):
                     curl_cmd += ["-H", f"Authorization: {info['auth']}"]
                 curl_cmd.append(info["url"])
-                subprocess.run(curl_cmd, timeout=1800, check=True)
+                result2 = subprocess.run(curl_cmd, timeout=1800)
+                if result2.returncode != 0:
+                    log(f"WARNING: Failed to download {rel_path} — skipping (worker may fail if this model is required)")
+                    if os.path.exists(vol_path):
+                        os.remove(vol_path)
+                    continue
             log(f"Downloaded: {rel_path}")
         
         # Symlink into ComfyUI models dir
