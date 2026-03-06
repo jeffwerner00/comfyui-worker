@@ -19,7 +19,7 @@ COMFY_DIR = "/workspace/ComfyUI"
 MODEL_VOLUME = "/runpod-volume"
 COMFY_HOST = "http://127.0.0.1:8188"
 
-# Model definitions — checked/downloaded on startup
+# Model definitions - checked/downloaded on startup
 CIVITAI_TOKEN = os.environ.get('CIVITAI_TOKEN', 'd0933fef3ae3fee1f474425e26266057')
 HF_TOKEN_VAL = os.environ.get('HF_TOKEN', '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')
 
@@ -93,7 +93,7 @@ def ensure_models():
                 curl_cmd.append(info["url"])
                 result2 = subprocess.run(curl_cmd, timeout=1800)
                 if result2.returncode != 0:
-                    log(f"WARNING: Failed to download {rel_path} — skipping (worker may fail if this model is required)")
+                    log(f"WARNING: Failed to download {rel_path} - skipping (worker may fail if this model is required)")
                     if os.path.exists(vol_path):
                         os.remove(vol_path)
                     continue
@@ -114,11 +114,11 @@ def ensure_models():
         vol_file = os.path.join(insightface_vol, model_file)
         comfy_file = os.path.join(insightface_comfy, model_file)
         if not os.path.exists(vol_file) or os.path.getsize(vol_file) < 10_000:
-            log(f"InsightFace {model_file} missing — will be auto-downloaded by insightface package on first use")
+            log(f"InsightFace {model_file} missing - will be auto-downloaded by insightface package on first use")
         if not os.path.exists(comfy_file) and os.path.exists(vol_file):
             os.symlink(vol_file, comfy_file)
     
-    # Face reference images — download to volume if missing, symlink into ComfyUI
+    # Face reference images - download to volume if missing, symlink into ComfyUI
     face_refs = {
         "riley-face-ref.jpg": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/riley-face-ref.jpg",
         "pam-face-ref.jpg":   "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/pam-face-ref.jpg",
@@ -138,7 +138,7 @@ def ensure_models():
                 if result.returncode == 0:
                     log(f"Downloaded: {fname}")
                 else:
-                    log(f"wget failed for {fname} (may not exist yet — skipping)")
+                    log(f"wget failed for {fname} (may not exist yet - skipping)")
                     if os.path.exists(vol_path):
                         os.remove(vol_path)
                     continue
@@ -162,7 +162,7 @@ def start_comfyui():
         stderr=subprocess.STDOUT
     )
     
-    # Wait for ComfyUI to be ready (up to 5 min — first start with custom nodes is slow)
+    # Wait for ComfyUI to be ready (up to 5 min - first start with custom nodes is slow)
     for i in range(300):
         try:
             urllib.request.urlopen(f"{COMFY_HOST}/system_stats", timeout=5)
@@ -288,10 +288,14 @@ def handler(job):
         log(f"Error: {e}")
         return {"error": str(e)}
 
-# Start initialization in background thread — worker registers with RunPod immediately
+# Start initialization in background thread - worker registers with RunPod immediately
 # instead of blocking for up to 300s+ waiting for ComfyUI to start
 _init_thread = threading.Thread(target=_run_initialize, daemon=True)
 _init_thread.start()
-log("Background init thread started — worker registering with RunPod now")
+log("Background init thread started - worker registering with RunPod now")
 
-runpod.serverless.start({"handler": handler})
+try:
+    runpod.serverless.start({"handler": handler})
+except Exception as e:
+    log(f"FATAL: runpod.serverless.start failed: {e}")
+    raise
