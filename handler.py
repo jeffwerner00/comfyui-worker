@@ -79,7 +79,7 @@ def ensure_models():
         # Download if not on volume
         if not os.path.exists(vol_path) or os.path.getsize(vol_path) < 1_000_000:
             log(f"Downloading {rel_path} (~{info['size_gb']}GB)...")
-            cmd = ["wget", "-q", "--show-progress", "-O", vol_path]
+            cmd = ["wget", "-q", "-L", "--show-progress", "-O", vol_path]
             if info.get("auth"):
                 cmd += ["--header", f"Authorization: {info['auth']}"]
             cmd.append(info["url"])
@@ -161,8 +161,8 @@ def start_comfyui():
         stderr=subprocess.STDOUT
     )
     
-    # Wait for ComfyUI to be ready
-    for i in range(60):
+    # Wait for ComfyUI to be ready (up to 5 min — first start with custom nodes is slow)
+    for i in range(300):
         try:
             urllib.request.urlopen(f"{COMFY_HOST}/system_stats", timeout=5)
             log(f"ComfyUI ready after {i+1}s")
@@ -170,7 +170,7 @@ def start_comfyui():
         except:
             time.sleep(1)
     
-    raise RuntimeError("ComfyUI failed to start")
+    raise RuntimeError("ComfyUI failed to start after 300s")
 
 def queue_workflow(workflow: dict, client_id: str = "serverless") -> str:
     """Submit workflow to ComfyUI, return prompt_id"""
