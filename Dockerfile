@@ -1,5 +1,5 @@
 # Riley ComfyUI Serverless Worker
-# Base: runpod/pytorch — pre-configured Python + CUDA + RunPod SDK environment
+# Base: runpod/pytorch - pre-configured Python + CUDA + RunPod SDK environment
 
 FROM runpod/pytorch:2.6.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 
@@ -16,8 +16,8 @@ RUN git clone https://github.com/comfyanonymous/ComfyUI.git ComfyUI
 # Install ComfyUI requirements (uses base image's Python env)
 RUN cd ComfyUI && pip install -r requirements.txt
 
-# Install xformers
-RUN pip install xformers==0.0.29.post2
+# Install xformers compatible with torch 2.6.0 (let pip resolve)
+RUN pip install xformers
 
 # Install custom nodes
 RUN cd ComfyUI/custom_nodes && \
@@ -30,8 +30,8 @@ RUN cd ComfyUI/custom_nodes && \
 # Install InsightFace + ONNX
 RUN pip install insightface onnxruntime-gpu
 
-# Install RunPod SDK
-RUN pip install runpod
+# Pin RunPod SDK to known-working version
+RUN pip install runpod==1.6.2
 
 # Create model directories (will be symlinked to network volume at runtime)
 RUN mkdir -p /workspace/ComfyUI/models/checkpoints \
