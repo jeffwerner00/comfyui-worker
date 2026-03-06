@@ -36,3 +36,5 @@ Accepts ComfyUI workflow JSON via RunPod serverless API. Returns base64-encoded 
 
 ## Network Volume
 Mount at `/runpod-volume`. Models are downloaded on first run and cached for subsequent workers.
+
+# Build trigger: 2026-03-06 15:33
