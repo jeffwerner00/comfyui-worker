@@ -67,16 +67,19 @@ def ensure_models():
         os.makedirs(os.path.dirname(comfy_path), exist_ok=True)
 
         need_download = False
+        expected_mb = info['size_gb'] * 1024
+        min_mb = expected_mb * 0.9  # Allow 10% tolerance
         if not os.path.exists(vol_path):
             log(f"{rel_path}: not on volume, need download")
             need_download = True
-        elif os.path.getsize(vol_path) < 1_000_000:
-            sz = os.path.getsize(vol_path)
-            log(f"{rel_path}: on volume but too small ({sz} bytes), need re-download")
-            need_download = True
         else:
-            sz = os.path.getsize(vol_path) / (1024*1024)
-            log(f"{rel_path}: on volume ({sz:.1f}MB) ✓")
+            sz_mb = os.path.getsize(vol_path) / (1024*1024)
+            if sz_mb < min_mb:
+                log(f"{rel_path}: on volume but too small ({sz_mb:.1f}MB, expected ~{expected_mb:.0f}MB) — re-downloading")
+                os.remove(vol_path)
+                need_download = True
+            else:
+                log(f"{rel_path}: on volume ({sz_mb:.1f}MB) ✓")
 
         if need_download:
             log(f"Downloading {rel_path} (~{info['size_gb']}GB)...")
