@@ -15,8 +15,8 @@ MODELS = {
         "auth": f"Bearer {CIVITAI_TOKEN}", "size_gb": 6.9
     },
     "checkpoints/ponyDiffusionV6XL.safetensors": {
-        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/ponyDiffusionV6XL.safetensors",
-        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 6.46
+        "url": "https://huggingface.co/LyliaEngine/Pony_Diffusion_V6_XL/resolve/main/ponyDiffusionV6XL_v6StartWithThisOne.safetensors",
+        "size_gb": 6.46
     },
     "loras/riley-pony-v1.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/riley-pony-v1.safetensors",
