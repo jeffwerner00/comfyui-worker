@@ -14,7 +14,7 @@ WORKDIR /workspace
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git ComfyUI
 
 # Pin yarl/aiohttp BEFORE installing ComfyUI requirements
-# yarl>=1.17 rejects '127.0.0.1:8188' as a host (colon not allowed) — breaks ComfyUI request handling
+# yarl>=1.17 rejects '127.0.0.1:8188' as a host (colon not allowed) - breaks ComfyUI request handling
 RUN pip install 'yarl<1.17.0' 'aiohttp<3.11.0'
 
 # Install ComfyUI requirements
@@ -39,6 +39,10 @@ RUN pip install insightface onnxruntime-gpu
 
 # Pin RunPod SDK
 RUN pip install runpod==1.6.2
+
+# FINAL yarl/aiohttp pin - must be last pip install
+# xformers and insightface can re-upgrade yarl; this ensures we end up pinned
+RUN pip install 'yarl<1.17.0' 'aiohttp<3.11.0'
 
 # Create model directories
 RUN mkdir -p /workspace/ComfyUI/models/checkpoints \
