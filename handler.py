@@ -94,8 +94,12 @@ def start_comfyui():
 def queue_workflow(workflow, client_id="serverless"):
     data = json.dumps({"prompt": workflow, "client_id": client_id}).encode()
     req = urllib.request.Request(f"{COMFY_HOST}/prompt", data=data, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        result = json.loads(resp.read())
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            result = json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        raise RuntimeError(f"ComfyUI /prompt rejected ({e.code}): {body}")
     if result.get("node_errors"):
         raise ValueError(f"Node errors: {json.dumps(result['node_errors'])}")
     return result["prompt_id"]
