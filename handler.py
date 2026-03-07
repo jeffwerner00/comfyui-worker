@@ -14,6 +14,10 @@ MODELS = {
         "url": "https://civitai.com/api/download/models/2155386",
         "auth": f"Bearer {CIVITAI_TOKEN}", "size_gb": 6.9
     },
+    "checkpoints/ponyDiffusionV6XL.safetensors": {
+        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/ponyDiffusionV6XL.safetensors",
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 6.46
+    },
     "loras/riley-pony-v1.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/riley-pony-v1.safetensors",
         "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
@@ -29,6 +33,10 @@ MODELS = {
     "loras/nova-pony-v1.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/nova-pony-v1.safetensors",
         "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
+    },
+    "loras/rowan-pony-v1.safetensors": {
+        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/rowan-pony-v1.safetensors",
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.23
     },
 }
 
@@ -114,6 +122,20 @@ def ensure_models():
 def start_comfyui():
     log("Starting ComfyUI...")
     comfy_log = "/workspace/comfyui.log"
+    # Write extra_model_paths.yaml to point ComfyUI directly at volume models
+    extra_paths_file = os.path.join(COMFY_DIR, "extra_model_paths.yaml")
+    extra_paths_content = f"""runpod_volume:
+    base_path: {MODEL_VOLUME}/models
+    checkpoints: checkpoints
+    loras: loras
+    ipadapter: ipadapter
+    clip_vision: clip_vision
+    controlnet: controlnet
+"""
+    with open(extra_paths_file, "w") as f:
+        f.write(extra_paths_content)
+    log(f"Wrote extra_model_paths.yaml pointing to {MODEL_VOLUME}/models")
+
     proc = subprocess.Popen(
         [sys.executable, "main.py", "--listen", "0.0.0.0", "--port", "8188", "--disable-xformers"],
         cwd=COMFY_DIR,
