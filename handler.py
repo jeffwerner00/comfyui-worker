@@ -39,25 +39,76 @@ def ensure_models():
     log("Checking models...")
     volume_models = os.path.join(MODEL_VOLUME, "models")
     comfy_models = os.path.join(COMFY_DIR, "models")
+
+    # Diagnostic: what's on the volume?
+    log(f"Volume mount exists: {os.path.exists(MODEL_VOLUME)}")
+    log(f"Volume models dir exists: {os.path.exists(volume_models)}")
+    if os.path.exists(volume_models):
+        for root, dirs, files in os.walk(volume_models):
+            for f in files:
+                fp = os.path.join(root, f)
+                sz = os.path.getsize(fp) / (1024*1024)
+                log(f"  Volume file: {os.path.relpath(fp, volume_models)} ({sz:.1f}MB)")
+    else:
+        log("  Volume models dir MISSING — will create and download everything")
+
     for rel_path, info in MODELS.items():
         vol_path = os.path.join(volume_models, rel_path)
         comfy_path = os.path.join(comfy_models, rel_path)
         os.makedirs(os.path.dirname(vol_path), exist_ok=True)
         os.makedirs(os.path.dirname(comfy_path), exist_ok=True)
-        if not os.path.exists(vol_path) or os.path.getsize(vol_path) < 1_000_000:
+
+        need_download = False
+        if not os.path.exists(vol_path):
+            log(f"{rel_path}: not on volume, need download")
+            need_download = True
+        elif os.path.getsize(vol_path) < 1_000_000:
+            sz = os.path.getsize(vol_path)
+            log(f"{rel_path}: on volume but too small ({sz} bytes), need re-download")
+            need_download = True
+        else:
+            sz = os.path.getsize(vol_path) / (1024*1024)
+            log(f"{rel_path}: on volume ({sz:.1f}MB) ✓")
+
+        if need_download:
             log(f"Downloading {rel_path} (~{info['size_gb']}GB)...")
             cmd = ["wget", "-q", "-L", "--show-progress", "-O", vol_path]
             if info.get("auth"):
                 cmd += ["--header", f"Authorization: {info['auth']}"]
             cmd.append(info["url"])
-            result = subprocess.run(cmd, timeout=1800)
+            result = subprocess.run(cmd, timeout=1800, capture_output=True, text=True)
             if result.returncode != 0:
-                log(f"wget failed for {rel_path}")
+                log(f"wget FAILED for {rel_path} (exit {result.returncode})")
+                log(f"  stderr: {result.stderr[:500]}")
+                # Check if file was partially written
+                if os.path.exists(vol_path):
+                    sz = os.path.getsize(vol_path)
+                    log(f"  partial file on disk: {sz} bytes")
                 continue
-            log(f"Downloaded: {rel_path}")
-        if not os.path.exists(comfy_path):
+            # Verify download size
+            if os.path.exists(vol_path):
+                sz = os.path.getsize(vol_path) / (1024*1024)
+                expected_mb = info['size_gb'] * 1024
+                log(f"Downloaded: {rel_path} ({sz:.1f}MB, expected ~{expected_mb:.0f}MB)")
+                if sz < 1:
+                    log(f"  WARNING: file suspiciously small, may be an error page")
+            else:
+                log(f"  WARNING: file not found after wget completed")
+                continue
+
+        # Symlink into ComfyUI
+        if os.path.islink(comfy_path):
+            target = os.readlink(comfy_path)
+            log(f"Symlink exists: {rel_path} -> {target}")
+        elif not os.path.exists(comfy_path):
             os.symlink(vol_path, comfy_path)
-            log(f"Symlinked: {rel_path}")
+            log(f"Symlinked: {rel_path} -> {vol_path}")
+
+    # Diagnostic: what does ComfyUI see?
+    ckpt_dir = os.path.join(comfy_models, "checkpoints")
+    lora_dir = os.path.join(comfy_models, "loras")
+    log(f"ComfyUI checkpoints dir: {os.listdir(ckpt_dir) if os.path.exists(ckpt_dir) else 'MISSING'}")
+    log(f"ComfyUI loras dir: {os.listdir(lora_dir) if os.path.exists(lora_dir) else 'MISSING'}")
     log("Model check complete")
 
 def start_comfyui():
