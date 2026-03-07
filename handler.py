@@ -1,5 +1,5 @@
 """
-RunPod Serverless Handler for Riley ComfyUI Pipeline
+RunPod Serverless Handler for Riley/Pam/Vera/Nova ComfyUI Pipeline
 """
 import runpod, json, os, time, urllib.request, urllib.error, urllib.parse, base64, subprocess, threading, sys
 
@@ -16,6 +16,18 @@ MODELS = {
     },
     "loras/riley-pony-v1.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/riley-pony-v1.safetensors",
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
+    },
+    "loras/pam-pony-v1.safetensors": {
+        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/pam-pony-v1.safetensors",
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
+    },
+    "loras/vera-pony-v1.safetensors": {
+        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/vera-pony-v1.safetensors",
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
+    },
+    "loras/nova-pony-v1.safetensors": {
+        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/nova-pony-v1.safetensors",
         "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
     },
 }
@@ -57,7 +69,6 @@ def start_comfyui():
         stdout=open(comfy_log, "w"),
         stderr=subprocess.STDOUT
     )
-    # Wait up to 5 min
     for i in range(300):
         try:
             urllib.request.urlopen(f"{COMFY_HOST}/system_stats", timeout=5)
@@ -65,22 +76,20 @@ def start_comfyui():
             return proc
         except:
             time.sleep(1)
-        # Check if process died
         if proc.poll() is not None:
             tail = ""
             try:
                 with open(comfy_log) as f:
                     tail = f.read()[-2000:]
             except: pass
-            raise RuntimeError(f"ComfyUI process exited with code {proc.returncode}. Log tail:\n{tail}")
-    # Timed out - get log tail
+            raise RuntimeError(f"ComfyUI exited (code {proc.returncode}). Log:\n{tail}")
     tail = ""
     try:
         with open(comfy_log) as f:
             tail = f.read()[-2000:]
     except: pass
     proc.kill()
-    raise RuntimeError(f"ComfyUI failed to start after 300s. Log tail:\n{tail}")
+    raise RuntimeError(f"ComfyUI timeout after 300s. Log:\n{tail}")
 
 def queue_workflow(workflow, client_id="serverless"):
     data = json.dumps({"prompt": workflow, "client_id": client_id}).encode()
