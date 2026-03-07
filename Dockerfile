@@ -1,5 +1,4 @@
 # Riley ComfyUI Serverless Worker
-# Build trigger: 2026-03-06
 # Base: runpod/pytorch - pre-configured Python + CUDA + RunPod SDK environment
 
 FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
@@ -14,10 +13,17 @@ WORKDIR /workspace
 # Clone ComfyUI
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git ComfyUI
 
+# Pin yarl/aiohttp BEFORE installing ComfyUI requirements
+# yarl>=1.17 rejects '127.0.0.1:8188' as a host (colon not allowed) — breaks ComfyUI request handling
+RUN pip install 'yarl<1.17.0' 'aiohttp<3.11.0'
+
 # Install ComfyUI requirements
 RUN cd ComfyUI && pip install -r requirements.txt
 
-# Install xformers (let pip resolve compatible version)
+# Re-pin yarl/aiohttp after requirements (in case they get upgraded)
+RUN pip install 'yarl<1.17.0' 'aiohttp<3.11.0'
+
+# Install xformers
 RUN pip install xformers
 
 # Install custom nodes
