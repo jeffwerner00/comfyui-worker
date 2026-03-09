@@ -223,6 +223,18 @@ def _run_initialize():
         _init_error = str(e)
         log(f"INIT ERROR: {e}")
 
+def save_input_images(images):
+    """Save base64-encoded images to ComfyUI's input directory so LoadImage can reference them."""
+    input_dir = os.path.join(COMFY_DIR, "input")
+    os.makedirs(input_dir, exist_ok=True)
+    for img in images:
+        name = img.get("name", "input.png")
+        data = base64.b64decode(img["data"])
+        path = os.path.join(input_dir, name)
+        with open(path, "wb") as f:
+            f.write(data)
+        log(f"Saved input image: {name} ({len(data)} bytes)")
+
 def handler(job):
     if _init_thread and _init_thread.is_alive():
         log("Waiting for initialization...")
@@ -234,6 +246,9 @@ def handler(job):
     client_id = job_input.get("client_id", f"job-{job.get('id', 'unknown')}")
     if not workflow:
         return {"error": "No workflow provided"}
+    # Save any input images to ComfyUI's input directory before running workflow
+    if "images" in job_input:
+        save_input_images(job_input["images"])
     log(f"Processing job {client_id}")
     prompt_id = queue_workflow(workflow, client_id)
     log(f"Queued: {prompt_id}")
