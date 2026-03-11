@@ -20,27 +20,27 @@ MODELS = {
     },
     "loras/riley-pony-v1.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/riley-pony-v1.safetensors",
-        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.2128
     },
     "loras/pam-pony-v2.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/pam_pony_v2.safetensors",
-        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.2128
     },
     "loras/vera-pony-v2.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/vera_pony_v2.safetensors",
-        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.1066
     },
     "loras/nova-pony-v2.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/nova_pony_v2.safetensors",
-        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.1066
     },
     "loras/rowan-pony-v2.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/rowan_pony_v2.safetensors",
-        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.23
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.1066
     },
     "loras/reed-pony-v2.safetensors": {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/reed_pony_v2.safetensors",
-        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.1066
     },
 }
 
