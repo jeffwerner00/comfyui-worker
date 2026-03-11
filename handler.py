@@ -11,8 +11,8 @@ HF_TOKEN_VAL = os.environ.get('HF_TOKEN', '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
 
 MODELS = {
     "checkpoints/lustifySDXLv7.safetensors": {
-        "url": "https://civitai.com/api/download/models/2155386",
-        "auth": f"Bearer {CIVITAI_TOKEN}", "size_gb": 6.9
+        "url": f"https://civitai.com/api/download/models/2155386?token={CIVITAI_TOKEN}",
+        "size_gb": 6.9
     },
     "checkpoints/ponyDiffusionV6XL.safetensors": {
         "url": "https://huggingface.co/LyliaEngine/Pony_Diffusion_V6_XL/resolve/main/ponyDiffusionV6XL_v6StartWithThisOne.safetensors",
@@ -22,21 +22,25 @@ MODELS = {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/riley-pony-v1.safetensors",
         "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
     },
-    "loras/pam-pony-v1.safetensors": {
-        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/pam-pony-v1.safetensors",
+    "loras/pam-pony-v2.safetensors": {
+        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/pam_pony_v2.safetensors",
         "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
     },
-    "loras/vera-pony-v1.safetensors": {
-        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/vera-pony-v1.safetensors",
+    "loras/vera-pony-v2.safetensors": {
+        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/vera_pony_v2.safetensors",
         "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
     },
-    "loras/nova-pony-v1.safetensors": {
-        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/nova-pony-v1.safetensors",
+    "loras/nova-pony-v2.safetensors": {
+        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/nova_pony_v2.safetensors",
         "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
     },
-    "loras/rowan-pony-v1.safetensors": {
-        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/rowan-pony-v1.safetensors",
+    "loras/rowan-pony-v2.safetensors": {
+        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/rowan_pony_v2.safetensors",
         "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.23
+    },
+    "loras/reed-pony-v2.safetensors": {
+        "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/reed_pony_v2.safetensors",
+        "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.14
     },
 }
 
@@ -93,10 +97,11 @@ def ensure_models():
             if result.returncode != 0:
                 log(f"wget FAILED for {rel_path} (exit {result.returncode})")
                 log(f"  stderr: {result.stderr[:500]}")
-                # Check if file was partially written
+                # Delete partial/corrupt file so next boot retries cleanly
                 if os.path.exists(vol_path):
                     sz = os.path.getsize(vol_path)
-                    log(f"  partial file on disk: {sz} bytes")
+                    log(f"  deleting partial file ({sz} bytes) to prevent corruption on next boot")
+                    os.remove(vol_path)
                 continue
             # Verify download size
             if os.path.exists(vol_path):
