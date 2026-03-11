@@ -89,9 +89,10 @@ def ensure_models():
 
         if need_download:
             log(f"Downloading {rel_path} (~{info['size_gb']}GB)...")
-            cmd = ["wget", "-q", "-L", "--show-progress", "-O", vol_path]
+            cmd = ["curl", "-fSL", "--retry", "3", "--retry-delay", "5",
+                   "-o", vol_path, "-A", "Mozilla/5.0 (ComfyUI-Worker)"]
             if info.get("auth"):
-                cmd += ["--header", f"Authorization: {info['auth']}"]
+                cmd += ["-H", f"Authorization: {info['auth']}"]
             cmd.append(info["url"])
             result = subprocess.run(cmd, timeout=1800, capture_output=True, text=True)
             if result.returncode != 0:
@@ -103,15 +104,17 @@ def ensure_models():
                     log(f"  deleting partial file ({sz} bytes) to prevent corruption on next boot")
                     os.remove(vol_path)
                 continue
-            # Verify download size
+            # Verify download size — delete if too small (error page / partial)
             if os.path.exists(vol_path):
                 sz = os.path.getsize(vol_path) / (1024*1024)
                 expected_mb = info['size_gb'] * 1024
                 log(f"Downloaded: {rel_path} ({sz:.1f}MB, expected ~{expected_mb:.0f}MB)")
-                if sz < 1:
-                    log(f"  WARNING: file suspiciously small, may be an error page")
+                if sz < 10:
+                    log(f"  FAILED: file only {sz:.1f}MB — deleting (likely error page or partial)")
+                    os.remove(vol_path)
+                    continue
             else:
-                log(f"  WARNING: file not found after wget completed")
+                log(f"  FAILED: file not found after curl completed")
                 continue
 
         # Symlink into ComfyUI
