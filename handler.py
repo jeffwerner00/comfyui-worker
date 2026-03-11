@@ -190,22 +190,47 @@ def queue_workflow(workflow, client_id="serverless"):
         raise ValueError(f"Node errors: {json.dumps(result['node_errors'])}")
     return result["prompt_id"]
 
-def wait_for_result(prompt_id, timeout=300):
+def wait_for_result(prompt_id, timeout=600):
     start = time.time()
     while time.time() - start < timeout:
         try:
             with urllib.request.urlopen(f"{COMFY_HOST}/history/{prompt_id}", timeout=10) as resp:
                 history = json.loads(resp.read())
             if prompt_id in history:
-                status = history[prompt_id].get("status", {})
-                if status.get("status_str") == "error":
+                entry = history[prompt_id]
+                status = entry.get("status", {})
+                status_str = status.get("status_str", "")
+
+                if status_str == "error":
                     raise RuntimeError(f"Generation error: {status.get('messages')}")
-                for node_id, output in history[prompt_id].get("outputs", {}).items():
+
+                # Look for output images
+                outputs = entry.get("outputs", {})
+                for node_id, output in outputs.items():
                     for img in output.get("images", []):
                         return img
+
+                # Prompt is in history but no images found
+                if status_str == "success" or outputs:
+                    # Completed but produced nothing — don't poll forever
+                    log(f"Prompt {prompt_id} finished (status={status_str}) but no images in outputs: {list(outputs.keys())}")
+                    raise RuntimeError(f"Generation completed but produced no images. Status: {status_str}, outputs: {json.dumps({k: list(v.keys()) for k,v in outputs.items()})}")
         except urllib.error.URLError:
             pass
         time.sleep(2)
+
+        # Log progress every 30s
+        elapsed = int(time.time() - start)
+        if elapsed % 30 < 3:
+            try:
+                with urllib.request.urlopen(f"{COMFY_HOST}/queue", timeout=5) as resp:
+                    queue = json.loads(resp.read())
+                running = len(queue.get("queue_running", []))
+                pending = len(queue.get("queue_pending", []))
+                log(f"  [{elapsed}s] Queue: {running} running, {pending} pending")
+            except:
+                log(f"  [{elapsed}s] (queue check failed)")
+
     raise TimeoutError(f"Generation timed out after {timeout}s")
 
 def download_image(filename):
