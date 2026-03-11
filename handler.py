@@ -3,11 +3,11 @@ RunPod Serverless Handler for Riley/Pam/Vera/Nova ComfyUI Pipeline
 """
 import runpod, json, os, time, urllib.request, urllib.error, urllib.parse, base64, subprocess, threading, sys
 
-COMFY_DIR = "/workspace/ComfyUI"
+COMFY_DIR = "/app/ComfyUI"
 MODEL_VOLUME = "/runpod-volume"
 COMFY_HOST = "http://127.0.0.1:8188"
-CIVITAI_TOKEN = os.environ.get('CIVITAI_TOKEN', 'd0933fef3ae3fee1f474425e26266057')
-HF_TOKEN_VAL = os.environ.get('HF_TOKEN', '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')
+CIVITAI_TOKEN = os.environ.get('CIVITAI_TOKEN', '')
+HF_TOKEN_VAL = os.environ.get('HF_TOKEN', '')
 
 MODELS = {
     "checkpoints/lustifySDXLv7.safetensors": {
@@ -134,7 +134,7 @@ def ensure_models():
 
 def start_comfyui():
     log("Starting ComfyUI...")
-    comfy_log = "/workspace/comfyui.log"
+    comfy_log = "/app/comfyui.log"
     # Write extra_model_paths.yaml to point ComfyUI directly at volume models
     extra_paths_file = os.path.join(COMFY_DIR, "extra_model_paths.yaml")
     extra_paths_content = f"""runpod_volume:

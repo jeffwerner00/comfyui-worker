@@ -1,11 +1,12 @@
 # Riley ComfyUI Serverless Worker
+# NOTE: App lives at /app to avoid conflict with RunPod network volume mount at /workspace
 FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 
 RUN apt-get update && apt-get install -y \
     git wget curl libgl1 libglib2.0-0 libsm6 libxext6 libxrender-dev \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /workspace
+WORKDIR /app
 
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git ComfyUI
 
@@ -32,21 +33,22 @@ RUN pip install runpod==1.6.2
 # Final ensure: both aiohttp and yarl at compatible fixed versions
 RUN pip install --upgrade 'aiohttp>=3.11.8' 'yarl>=1.18.0'
 
-RUN mkdir -p /workspace/ComfyUI/models/checkpoints \
-    /workspace/ComfyUI/models/loras \
-    /workspace/ComfyUI/models/ipadapter \
-    /workspace/ComfyUI/models/clip_vision \
-    /workspace/ComfyUI/models/controlnet \
-    /workspace/ComfyUI/models/insightface/models/buffalo_l \
-    /workspace/ComfyUI/input \
-    /workspace/ComfyUI/output \
+RUN mkdir -p /app/ComfyUI/models/checkpoints \
+    /app/ComfyUI/models/loras \
+    /app/ComfyUI/models/ipadapter \
+    /app/ComfyUI/models/clip_vision \
+    /app/ComfyUI/models/controlnet \
+    /app/ComfyUI/models/insightface/models/buffalo_l \
+    /app/ComfyUI/input \
+    /app/ComfyUI/output \
     /runpod-volume/models \
     /runpod-volume/inputs \
     /runpod-volume/insightface
 
-COPY handler.py /workspace/handler.py
+COPY handler.py /app/handler.py
 
 ENV PYTHONUNBUFFERED=1
-ENV HF_TOKEN=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
+# HF_TOKEN and CIVITAI_TOKEN are passed via RunPod template environment variables
+# DO NOT hardcode tokens here — repo is public
 
-CMD ["python3", "-u", "/workspace/handler.py"]
+CMD ["python3", "-u", "/app/handler.py"]
