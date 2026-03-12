@@ -42,6 +42,14 @@ MODELS = {
         "url": "https://huggingface.co/datasets/Jwerner00/unmasked-assets/resolve/main/reed_pony_v2.safetensors",
         "auth": f"Bearer {HF_TOKEN_VAL}", "size_gb": 0.1066
     },
+    "ipadapter/ip-adapter-plus-face_sdxl_vit-h.safetensors": {
+        "url": "https://huggingface.co/h94/IP-Adapter/resolve/main/sdxl_models/ip-adapter-plus-face_sdxl_vit-h.safetensors",
+        "size_gb": 0.7893
+    },
+    "clip_vision/CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors": {
+        "url": "https://huggingface.co/h94/IP-Adapter/resolve/main/models/image_encoder/model.safetensors",
+        "size_gb": 2.3547
+    },
 }
 
 def log(msg):
